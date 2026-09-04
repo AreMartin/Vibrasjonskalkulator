@@ -1,0 +1,884 @@
+<!-- Avhengigheter for HubSpot Modulen -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- CSS og Tailwind Konfigurasjon -->
+<style>
+    .hs-vib-calc-wrapper input[type="number"]::-webkit-inner-spin-button,
+    .hs-vib-calc-wrapper input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Skjuler print-malen på skjerm */
+    #print-template {
+        display: none;
+    }
+
+    /* Print-spesifikke regler for selve PDF-motoren */
+    @media print {
+        body, html { background-color: white !important; }
+        .page-break-avoid { page-break-inside: avoid !important; break-inside: avoid !important; }
+        .print-bg-fix { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    }
+
+    /* Tilpasset scrollbar for søkeresultater */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aaa; }
+</style>
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['"GT Walsheim"', '"GT Walsheim Pro"', 'sans-serif'],
+                },
+                colors: {
+                    brand: {
+                        dark: '#013026',  
+                        light: '#f8faf9', 
+                        peach: '#F9D3A8', 
+                        mint: '#BEE6DA',  
+                        pink: '#FAD2CD',  
+                        gold: '#d97706',  
+                        red: '#dc2626'    
+                    }
+                },
+                boxShadow: {
+                    'soft': '0 4px 24px -4px rgba(1, 48, 38, 0.04)',
+                    'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+                    'card': '0 4px 20px rgba(0,0,0, 0.03)',
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Hovedwrapper -->
+<div id="app-container" class="hs-vib-calc-wrapper antialiased bg-gray-50 py-10 px-4 flex justify-center text-[#013026] min-h-screen" style="font-family: 'GT Walsheim', 'GT Walsheim Pro', sans-serif;">
+
+    <!-- =========================================================
+         1. INTERAKTIV UI (Det du ser på skjermen)
+         ========================================================= -->
+    <div id="interactive-ui" class="w-full max-w-5xl">
+        
+        <!-- GLOBAL HEADER (Overskrift utenfor hvit boks) -->
+        <div class="mb-6 px-2">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-brand-dark tracking-tight">Vibrasjonskartlegging</h1>
+            <p class="text-gray-500 mt-2 font-medium text-lg">Kartlegg eksponering og generer vurderingsrapport for ansatte.</p>
+        </div>
+
+        <!-- ANSATT & TYPE-SEKSJON -->
+        <div class="bg-white rounded-3xl shadow-soft p-6 sm:p-10 mb-8 relative z-20">
+            
+            <div class="mb-6 pb-6 border-b border-gray-100">
+                <div class="inline-flex items-center gap-2 bg-brand-mint/30 text-brand-dark px-4 py-2 rounded-xl text-sm font-semibold border border-brand-mint/50">
+                    <i class="fas fa-lightbulb text-brand-dark/70"></i>
+                    Husk at tiden som legges inn i verktøylisten skal være faktisk daglig "utløsertid" (tiden maskinen vibrerer).
+                </div>
+            </div>
+
+            <!-- Ansatt & Type (Horisontal layout) -->
+            <h2 class="text-xl font-bold text-brand-dark mb-5 flex items-center gap-2">
+                <i class="fas fa-user-circle text-brand-mint/80"></i> Hvem gjelder kartleggingen for?
+            </h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <!-- Ansatt -->
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Ansatt (Navn)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                        <input type="text" id="empName" placeholder="F.eks. Ola Nordmann" class="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-dark focus:bg-white focus:ring-1 focus:ring-brand-dark rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-brand-dark outline-none transition-all truncate">
+                    </div>
+                </div>
+                <!-- Rolle -->
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Stilling / Rolle</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-id-badge text-sm"></i>
+                        </div>
+                        <input type="text" id="empRole" placeholder="F.eks. Rørlegger" class="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-dark focus:bg-white focus:ring-1 focus:ring-brand-dark rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-brand-dark outline-none transition-all truncate">
+                    </div>
+                </div>
+                <!-- Avdeling -->
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Avdeling / Prosjekt</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-building text-sm"></i>
+                        </div>
+                        <input type="text" id="empDept" placeholder="F.eks. Byggeplass A" class="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-dark focus:bg-white focus:ring-1 focus:ring-brand-dark rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-brand-dark outline-none transition-all truncate">
+                    </div>
+                </div>
+                <!-- Dato -->
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Dato</label>
+                    <div class="relative">
+                        <input type="date" id="assessmentDate" class="w-full bg-gray-50/50 border border-gray-200 focus:border-brand-dark focus:bg-white focus:ring-1 focus:ring-brand-dark rounded-xl px-4 py-3 text-sm font-semibold text-brand-dark outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TYPE VIBRASJON -->
+            <div class="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-sm font-bold text-brand-dark">Type eksponering</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Velg hvilken type vibrasjon som skal kartlegges.</p>
+                </div>
+                <div class="p-1 flex w-full sm:w-auto gap-1 relative bg-gray-200/50 rounded-full">
+                    <button id="btnHandArm" onclick="setVibrationType('hand-arm')" class="flex-1 sm:w-36 bg-white border border-gray-200/50 text-brand-dark rounded-full py-2 text-sm font-bold transition-all shadow-sm">Hånd / Arm</button>
+                    <button id="btnWholeBody" onclick="setVibrationType('whole-body')" class="flex-1 sm:w-36 bg-transparent border border-transparent text-gray-500 hover:text-brand-dark rounded-full py-2 text-sm font-bold transition-all">Helkropp</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOVEDINNHOLD: 2 KOLONNER -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
+            
+            <!-- VENSTRE KOLONNE: Verktøy og Forbehold -->
+            <div class="lg:col-span-8 flex flex-col gap-8">
+                
+                <div class="bg-white rounded-3xl shadow-soft p-6 sm:p-10">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-brand-dark flex items-center gap-2 whitespace-nowrap">
+                            <i class="fas fa-toolbox text-brand-mint/80"></i> Kartlagt utstyr
+                        </h2>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto relative">
+                            <!-- SØKEFELT (Autocomplete) -->
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-search text-sm"></i>
+                                </div>
+                                <input type="text" id="toolSearch" placeholder="Søk (Bosch, Hilti, Hikoki)..." autocomplete="off" class="w-full sm:w-[280px] bg-white border-2 border-gray-200 focus:border-brand-dark focus:ring-0 rounded-full pl-11 pr-4 py-2.5 text-sm font-semibold text-brand-dark outline-none transition-all shadow-sm">
+                                
+                                <div id="searchResults" class="hidden absolute top-full left-0 mt-2 w-full bg-white border border-gray-100 shadow-xl rounded-2xl overflow-hidden z-50 max-h-64 overflow-y-auto custom-scrollbar">
+                                    <!-- JS fyller inn treff -->
+                                </div>
+                            </div>
+                            
+                            <button onclick="addTool()" class="bg-white border-2 border-brand-dark text-brand-dark hover:bg-gray-50 px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-sm">
+                                <i class="fas fa-plus text-xs"></i> <span>Eget</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Liste over verktøy -->
+                    <div id="toolsList" class="space-y-4 relative z-10"></div>
+
+                    <div id="emptyState" class="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 mt-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-brand-mint">
+                            <i class="fas fa-hammer text-xl"></i>
+                        </div>
+                        <p class="text-brand-dark font-bold text-lg mb-1">Ingen verktøy lagt til</p>
+                        <p class="text-gray-500 text-sm">Søk i databasen over, eller legg inn ditt eget.</p>
+                    </div>
+                </div>
+
+                <!-- ADVARSEL BOKS (FORBEHOLD) -->
+                <div class="bg-brand-peach/10 rounded-3xl p-6 sm:p-8 border border-brand-gold/20 flex flex-col gap-3 text-sm shadow-soft">
+                    <h3 class="font-bold text-brand-dark flex items-center gap-2 text-base">
+                        <i class="fas fa-exclamation-triangle text-brand-gold"></i> Viktige forbehold (Virkelighet vs Lab)
+                    </h3>
+                    <ul class="text-gray-600 space-y-3 mt-2 text-sm leading-relaxed list-none pl-1">
+                        <li class="relative pl-5 before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-brand-gold before:rounded-full">
+                            <strong class="text-brand-dark">Reell eksponering:</strong> Produsentens tall er lab-verdier. Ute på byggeplass kan vibrasjonene i praksis være 1.5 – 2 ganger høyere.
+                        </li>
+                        <li class="relative pl-5 before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-brand-gold before:rounded-full">
+                            <strong class="text-brand-dark">Verktøyets alder & Tilbehør:</strong> Verdier forutsetter nytt utstyr og feilfritt tilbehør. Slitasje og sløve bor øker vibrasjonene drastisk.
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- HØYRE KOLONNE: Resultat (Sticky) -->
+            <div class="lg:col-span-4 sticky top-8 flex flex-col gap-6">
+                
+                <div class="bg-white rounded-3xl shadow-soft p-6 sm:p-8">
+                    <h2 class="text-lg font-bold text-brand-dark mb-5 border-b border-gray-100 pb-3">Samlet eksponering (A8)</h2>
+                    
+                    <div id="resultContainer" class="bg-brand-mint rounded-2xl p-6 sm:p-8 transition-colors duration-500 shadow-inner-soft border border-brand-mint/20 relative overflow-hidden flex flex-col justify-center mb-6">
+                        <div class="flex flex-col items-center text-center relative z-10 w-full">
+                            <div class="mb-8">
+                                <div class="text-[11px] font-bold text-brand-dark/60 uppercase tracking-widest mb-2">Total eksponering</div>
+                                <div class="text-7xl font-extrabold text-brand-dark tracking-tighter leading-none" id="totalA8Value">0.0</div>
+                                <div class="text-sm font-bold mt-3 uppercase tracking-wide text-brand-dark/70 bg-white/40 px-4 py-1.5 rounded-full inline-block" id="statusTitle">Trygt nivå</div>
+                            </div>
+                            <div class="w-full flex flex-col justify-center">
+                                <div class="relative w-full h-3 bg-white/60 rounded-full overflow-hidden shadow-inner-soft mb-5">
+                                    <div id="markerAction" class="absolute top-0 h-3 w-0.5 bg-brand-gold z-10" style="left: 50%;"></div>
+                                    <div id="markerMax" class="absolute top-0 h-3 w-0.5 bg-brand-red z-10" style="left: 80%;"></div>
+                                    <div id="resultBar" class="absolute top-0 left-0 h-3 bg-brand-dark rounded-full transition-all duration-700 ease-out" style="width: 0%;"></div>
+                                </div>
+                                <p id="adviceHeading" class="text-[13px] font-medium text-brand-dark/80 leading-relaxed">
+                                    Samlet bruk er under tiltaksverdi. Dette er et akseptabelt scenario for en arbeidsdag.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Forklaring av grenser -->
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col gap-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fas fa-info text-brand-dark text-[10px]"></i>
+                            </div>
+                            <div class="text-gray-700 leading-snug w-full">
+                                <span class="font-bold text-brand-dark">Tiltaksverdi (<span id="infoActionLimit">2.5</span> m/s²):</span><br> 
+                                <span class="text-gray-500 text-[11px]">Krav til tiltak og helseundersøkelse.</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200/70 pt-3"></div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fas fa-ban text-brand-red text-[10px]"></i>
+                            </div>
+                            <div class="text-gray-700 leading-snug w-full">
+                                <span class="font-bold text-brand-dark">Grenseverdi (<span id="infoMaxLimit">5.0</span> m/s²):</span><br> 
+                                <span class="text-gray-500 text-[11px]">Absolutt max grense. <span class="font-bold text-brand-red">Stans arbeidet</span>.</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200/70 pt-3"></div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fas fa-calculator text-brand-dark text-[10px]"></i>
+                            </div>
+                            <div class="text-gray-700 leading-snug w-full">
+                                <span class="font-bold text-brand-dark">Hvordan regnes dette ut (A8)?</span><br> 
+                                <span class="text-gray-500 text-[11px]">Utregningen baseres på både verktøyets vibrasjonsnivå og <strong>effektiv daglig brukstid (utløsertid)</strong>, og standardiseres til en 8-timers arbeidsdag. Et verktøy med høy verdi kan altså brukes trygt i korte perioder.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div> <!-- Slutt Hovedinnhold Grid -->
+
+        <!-- BUNNSEKSJON: TILTAKSPLAN -->
+        <div class="bg-white rounded-3xl shadow-soft p-6 sm:p-10 mt-8 mb-8 relative z-10">
+            <h2 class="text-xl font-bold text-brand-dark mb-2 flex items-center gap-2">
+                <i class="fas fa-clipboard-check text-brand-mint/80"></i> Tiltaksplan
+            </h2>
+            <p class="text-sm text-gray-500 mb-5">Velg standardtiltak og/eller legg til dine egne kommentarer under. Valgte chips inkluderes automatisk i rapporten.</p>
+            
+            <!-- Chips for hurtigvalg (Toggles) -->
+            <div class="flex flex-wrap gap-2 mb-5">
+                <button onclick="toggleMeasure(this, 'Innføre rullering på oppgaven for å dele på eksponeringen.')" class="bg-gray-50 border border-gray-200 text-brand-dark hover:bg-gray-200 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors shadow-sm">
+                    Rullering
+                </button>
+                <button onclick="toggleMeasure(this, 'Legge inn hyppigere pauser i arbeidet.')" class="bg-gray-50 border border-gray-200 text-brand-dark hover:bg-gray-200 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors shadow-sm">
+                    Flere pauser
+                </button>
+                <button onclick="toggleMeasure(this, 'Gjennomføre service og bytte til nyere, feilfritt tilbehør/bor.')" class="bg-gray-50 border border-gray-200 text-brand-dark hover:bg-gray-200 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors shadow-sm">
+                    Vedlikehold/Utstyr
+                </button>
+                <button onclick="toggleMeasure(this, 'Tilby ansatte helseundersøkelse iht. regelverk.')" class="bg-gray-50 border border-gray-200 text-brand-dark hover:bg-gray-200 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors shadow-sm">
+                    Helseundersøkelse
+                </button>
+            </div>
+
+            <!-- Egendefinert tekst -->
+            <textarea id="actionPlanInput" class="w-full h-24 bg-gray-50 border border-gray-200 focus:border-brand-dark focus:bg-white focus:ring-1 focus:ring-brand-dark rounded-2xl p-4 text-sm font-medium text-brand-dark outline-none transition-all resize-y shadow-inner-soft" placeholder="Skriv inn ytterligere kommentarer eller spesifikke tiltak her..."></textarea>
+        </div>
+
+        <!-- BUNNBANNER (Generer PDF) -->
+        <div class="bg-gray-100 rounded-3xl p-6 sm:p-8 border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden z-10">
+            <div class="absolute -right-10 -top-10 w-48 h-48 bg-brand-mint/40 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="text-center md:text-left relative z-10 flex-1">
+                <h3 class="text-xl font-bold text-brand-dark mb-2 flex items-center justify-center md:justify-start gap-2">
+                    <i class="fas fa-check-circle text-brand-mint"></i> Ferdig med kartleggingen?
+                </h3>
+                <p class="text-sm text-gray-600 font-medium">
+                    Kontroller at alt utstyr og tiltak er lagt til. Klikk på knappen for å generere den formelle dokumentasjonen.
+                </p>
+            </div>
+            <div class="relative z-10 shrink-0 w-full md:w-auto flex justify-center">
+                <button onclick="startPDFGeneration()" class="w-full md:w-auto bg-brand-dark text-brand-mint hover:bg-black rounded-full px-8 py-4 text-base font-bold transition-all flex items-center justify-center gap-3 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    Last ned vurderingsrapport <i class="fas fa-file-pdf"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+         2. UTSKRIFTSMAL (Skjult på skjerm, vises kun på PDF)
+         ========================================================= -->
+    <div id="print-template" class="w-full max-w-4xl mx-auto p-10 bg-white">
+        
+        <!-- Header Print -->
+        <div class="flex justify-between items-end border-b-2 border-brand-dark pb-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-brand-dark">Vibrasjonskartlegging</h1>
+                <p class="text-gray-500 text-sm mt-1">Dokumentasjon av daglig eksponering for <span id="printTypeTitle" class="font-bold">Hånd- og armvibrasjoner</span></p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Dato for utførelse:</p>
+                <p class="font-bold text-brand-dark" id="printDateTop">-</p>
+            </div>
+        </div>
+
+        <!-- Info om ansatt tabell -->
+        <div class="mb-8">
+            <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">1. Ansattinformasjon</h3>
+            <table class="w-full text-sm border-collapse">
+                <tbody>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2 text-gray-500 w-1/3">Navn på ansatt:</td>
+                        <td class="py-2 font-bold text-brand-dark" id="printName">-</td>
+                    </tr>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2 text-gray-500">Stilling / Rolle:</td>
+                        <td class="py-2 font-bold text-brand-dark" id="printRole">-</td>
+                    </tr>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2 text-gray-500">Avdeling / Prosjekt:</td>
+                        <td class="py-2 font-bold text-brand-dark" id="printDept">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Verktøy tabell -->
+        <div class="mb-8 page-break-avoid">
+            <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">2. Kartlagt utstyr og brukstid</h3>
+            <table class="w-full text-sm border-collapse text-left">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-2 px-3 font-bold text-brand-dark border border-gray-200 w-1/2">Maskin / Utstyr</th>
+                        <th class="py-2 px-3 font-bold text-brand-dark border border-gray-200 text-center">Vibrasjon (m/s²)</th>
+                        <th class="py-2 px-3 font-bold text-brand-dark border border-gray-200 text-center">Daglig utløsertid</th>
+                        <th class="py-2 px-3 font-bold text-brand-dark border border-gray-200 text-center">Bidrag (A8)</th>
+                    </tr>
+                </thead>
+                <tbody id="printToolsTableBody">
+                    <!-- Fylles av JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Konklusjon / Total -->
+        <div class="mb-8 page-break-avoid">
+            <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">3. Vurdering av samlet eksponering</h3>
+            
+            <!-- Resultatboks i utskrift (med ID-er for fargesetting) -->
+            <div id="printResultBox" class="flex gap-6 items-center p-4 border border-gray-200 bg-gray-50 rounded-lg print-bg-fix">
+                <div id="printTotalBox" class="text-center bg-white border border-gray-200 p-4 rounded-md min-w-[120px] print-bg-fix">
+                    <div class="text-xs text-gray-500 uppercase tracking-wider">Total A(8)</div>
+                    <div class="text-4xl font-bold text-brand-dark" id="printTotal">-</div>
+                </div>
+                <div>
+                    <p class="font-bold text-brand-dark text-lg mb-1" id="printStatusTitle">-</p>
+                    <p class="text-sm text-gray-700 leading-relaxed" id="printStatusText">-</p>
+                </div>
+            </div>
+            
+            <div class="mt-2 text-xs text-gray-500">
+                Gjeldende grenser for <span id="printTypeLabelSmall">Hånd/Arm</span>: Tiltaksverdi = <span id="printLimitAction">-</span> m/s² | Grenseverdi = <span id="printLimitMax">-</span> m/s².
+            </div>
+        </div>
+
+        <!-- Tiltaksplan -->
+        <div class="mb-12 page-break-avoid">
+            <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">4. Tiltaksplan</h3>
+            <div class="p-4 border border-gray-200 min-h-[100px] text-sm text-gray-800 whitespace-pre-wrap bg-white print-bg-fix" id="printActionText">
+                Ingen tiltaksplan oppgitt.
+            </div>
+        </div>
+
+        <!-- Signaturfelt -->
+        <div class="page-break-avoid border-t-2 border-gray-200 pt-8 mt-12 flex justify-between gap-10">
+            <div class="w-1/2">
+                <div class="border-b border-brand-dark pb-8 mb-2"></div>
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Ansatt (Signatur)</p>
+            </div>
+            <div class="w-1/2">
+                <div class="border-b border-brand-dark pb-8 mb-2"></div>
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">HMS-ansvarlig / Leder (Signatur)</p>
+            </div>
+        </div>
+        
+    </div> <!-- Slutt Utskriftsmal -->
+
+</div> <!-- Slutt Hovedwrapper -->
+
+<!-- =========================================================================
+     HUBSPOT JAVASCRIPT
+     ========================================================================= -->
+<script>
+    const LIMITS = {
+        'hand-arm': { action: 2.5, max: 5.0, unit: 'm/s²', scaleMax: 7.0 }, 
+        'whole-body': { action: 0.5, max: 1.1, unit: 'm/s²', scaleMax: 1.5 }
+    };
+
+    const TOOL_DATABASE = [
+        // --- HÅND/ARM: VINKELSLIPERE (Grinders) ---
+        { brand: "Bosch", model: "GWS 18V-10", type: "Vinkelsliper 125mm", value: 6.0, category: "hand-arm" },
+        { brand: "Makita", model: "DGA504", type: "Vinkelsliper 125mm", value: 6.5, category: "hand-arm" },
+        { brand: "Hilti", model: "AG 125-A22", type: "Vinkelsliper", value: 3.8, category: "hand-arm" },
+        { brand: "DeWalt", model: "DCG412N", type: "Vinkelsliper 125mm", value: 6.0, category: "hand-arm" },
+        { brand: "Milwaukee", model: "M18 FSAG125X", type: "Vinkelsliper", value: 5.8, category: "hand-arm" },
+        { brand: "Hikoki", model: "G3613DA", type: "Vinkelsliper 125mm", value: 5.9, category: "hand-arm" },
+
+        // --- HÅND/ARM: BORHAMMERE / KOMBIHAMMERE (Rotary Hammers) ---
+        { brand: "Bosch", model: "GBH 18V-26", type: "Borhammer", value: 13.0, category: "hand-arm" },
+        { brand: "Makita", model: "DHR242", type: "Borhammer", value: 13.5, category: "hand-arm" },
+        { brand: "Hilti", model: "TE 6-A22", type: "Borhammer", value: 11.4, category: "hand-arm" },
+        { brand: "DeWalt", model: "DCH273", type: "Borhammer", value: 6.6, category: "hand-arm" },
+        { brand: "Milwaukee", model: "M18 CHX", type: "Borhammer", value: 8.9, category: "hand-arm" },
+        { brand: "Hikoki", model: "DH36DPA", type: "Borhammer", value: 17.5, category: "hand-arm" },
+
+        // --- HÅND/ARM: SAGER (Saws) ---
+        { brand: "Makita", model: "DJR186", type: "Bajonettsag", value: 13.0, category: "hand-arm" },
+        { brand: "Bosch", model: "GSA 18 V-LI", type: "Bajonettsag", value: 20.0, category: "hand-arm" },
+        { brand: "Hikoki", model: "CR36DA", type: "Bajonettsag", value: 10.7, category: "hand-arm" },
+        { brand: "Festool", model: "TSC 55", type: "Dykksag", value: 2.5, category: "hand-arm" },
+
+        // --- HÅND/ARM: DRILLER OG TREKKERE (Drills & Impacts) ---
+        { brand: "Makita", model: "DTD152", type: "Slagtrekker", value: 10.5, category: "hand-arm" },
+        { brand: "DeWalt", model: "DCF887", type: "Slagtrekker", value: 22.0, category: "hand-arm" },
+        { brand: "Hikoki", model: "WH36DB", type: "Slagtrekker", value: 16.5, category: "hand-arm" },
+
+        // --- HELKROPP: ANLEGGSMASKINER OG KJØRETØY (Whole Body Vibration) ---
+        { brand: "Volvo", model: "L110H", type: "Hjullaster", value: 0.6, category: "whole-body" },
+        { brand: "Caterpillar", model: "320", type: "Gravemaskin", value: 0.5, category: "whole-body" },
+        { brand: "Scania", model: "G500", type: "Lastebil (Dårlig vei)", value: 0.9, category: "whole-body" }
+    ];
+
+    let currentState = {
+        type: 'hand-arm',
+        tools: [],
+        selectedMeasures: [] // For å holde styr på valgte chips
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('assessmentDate').valueAsDate = new Date();
+        setupAutocomplete();
+        renderTools();
+        calculateTotal();
+    });
+
+    // Funksjon for å slå chips av og på (Toggle)
+    function toggleMeasure(btnElement, text) {
+        const index = currentState.selectedMeasures.indexOf(text);
+        
+        if (index > -1) {
+            // Hvis valgt: Fjern fra liste og fjern aktiv farge
+            currentState.selectedMeasures.splice(index, 1);
+            btnElement.classList.remove('bg-brand-dark', 'text-white', 'border-brand-dark');
+            btnElement.classList.add('bg-gray-50', 'text-brand-dark', 'border-gray-200');
+        } else {
+            // Hvis ikke valgt: Legg til i liste og sett aktiv farge
+            currentState.selectedMeasures.push(text);
+            btnElement.classList.remove('bg-gray-50', 'text-brand-dark', 'border-gray-200');
+            btnElement.classList.add('bg-brand-dark', 'text-white', 'border-brand-dark');
+        }
+    }
+
+    function setupAutocomplete() {
+        const input = document.getElementById('toolSearch');
+        const resultsBox = document.getElementById('searchResults');
+        
+        input.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            resultsBox.innerHTML = '';
+            
+            if (query.length < 1) {
+                resultsBox.classList.add('hidden');
+                return;
+            }
+
+            const matches = TOOL_DATABASE.filter(tool => {
+                if (tool.category !== currentState.type) return false;
+                const searchString = `${tool.brand} ${tool.model} ${tool.type}`.toLowerCase();
+                return searchString.includes(query);
+            });
+
+            if (matches.length > 0) {
+                resultsBox.classList.remove('hidden');
+                matches.forEach(tool => {
+                    const item = document.createElement('div');
+                    item.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center';
+                    item.innerHTML = `
+                        <div class="pr-2">
+                            <div class="font-bold text-brand-dark text-sm">${tool.brand} ${tool.model}</div>
+                            <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">${tool.type}</div>
+                        </div>
+                        <div class="text-sm font-bold text-brand-dark bg-gray-100 px-2 py-1 rounded-md whitespace-nowrap">
+                            ${tool.value.toFixed(1)} m/s²
+                        </div>
+                    `;
+                    item.addEventListener('click', () => {
+                        addTool(`${tool.brand} ${tool.model} (${tool.type})`, tool.value);
+                        input.value = '';
+                        resultsBox.classList.add('hidden');
+                    });
+                    resultsBox.appendChild(item);
+                });
+            } else {
+                resultsBox.classList.remove('hidden');
+                resultsBox.innerHTML = `<div class="p-4 text-center text-sm text-gray-500">Fant ikke "${query}". Bruk "Legg til eget".</div>`;
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !resultsBox.contains(e.target)) {
+                resultsBox.classList.add('hidden');
+            }
+        });
+    }
+
+    function setVibrationType(type) {
+        currentState.type = type;
+        
+        const btnHand = document.getElementById('btnHandArm');
+        const btnWhole = document.getElementById('btnWholeBody');
+        const searchInput = document.getElementById('toolSearch');
+        
+        if (type === 'hand-arm') {
+            btnHand.className = "flex-1 sm:w-36 bg-white border border-gray-200/50 text-brand-dark rounded-full py-2 text-sm font-bold transition-all shadow-sm";
+            btnWhole.className = "flex-1 sm:w-36 bg-transparent border border-transparent text-gray-500 hover:text-brand-dark rounded-full py-2 text-sm font-bold transition-all";
+            searchInput.placeholder = "Søk (Bosch, Hilti, Hikoki)...";
+        } else {
+            btnWhole.className = "flex-1 sm:w-36 bg-white border border-gray-200/50 text-brand-dark rounded-full py-2 text-sm font-bold transition-all shadow-sm";
+            btnHand.className = "flex-1 sm:w-36 bg-transparent border border-transparent text-gray-500 hover:text-brand-dark rounded-full py-2 text-sm font-bold transition-all";
+            searchInput.placeholder = "Søk (Volvo, Scania, CAT)...";
+        }
+
+        const action = LIMITS[type].action;
+        const max = LIMITS[type].max;
+        const scaleMax = LIMITS[type].scaleMax;
+
+        document.getElementById('infoActionLimit').innerText = action.toFixed(1);
+        document.getElementById('infoMaxLimit').innerText = max.toFixed(1);
+        document.getElementById('markerAction').style.left = `${(action / scaleMax) * 100}%`;
+        document.getElementById('markerMax').style.left = `${(max / scaleMax) * 100}%`;
+
+        currentState.tools = [];
+        document.getElementById('toolSearch').value = '';
+        document.getElementById('searchResults').classList.add('hidden');
+        renderTools();
+        calculateTotal();
+    }
+
+    function addTool(name = "", value = null) {
+        const id = 'tool_' + Date.now();
+        currentState.tools.push({ id: id, name: name, value: value, hours: 0, minutes: 0 });
+        renderTools();
+        calculateTotal();
+    }
+
+    function removeTool(id) {
+        currentState.tools = currentState.tools.filter(t => t.id !== id);
+        renderTools();
+        calculateTotal();
+    }
+
+    function updateToolData(id, field, value) {
+        const tool = currentState.tools.find(t => t.id === id);
+        if (tool) {
+            tool[field] = field === 'value' ? (parseFloat(value) || 0) : value;
+            renderTools(); 
+            calculateTotal();
+        }
+    }
+    
+    function stepTime(id, field, amount) {
+         const tool = currentState.tools.find(t => t.id === id);
+         if (tool) {
+             let current = tool[field] || 0;
+             let next = current + amount;
+             
+             if (field === 'minutes') {
+                 if (next >= 60) { tool.hours = (tool.hours || 0) + 1; next = next - 60; } 
+                 else if (next < 0) {
+                     if (tool.hours > 0) { tool.hours -= 1; next = 60 + next; } else { next = 0; }
+                 }
+             } else if (field === 'hours' && next < 0) { next = 0; }
+             
+             tool[field] = next;
+             renderTools();
+             calculateTotal();
+         }
+    }
+
+    function renderTools() {
+        const list = document.getElementById('toolsList');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (currentState.tools.length === 0) {
+            list.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        
+        emptyState.classList.add('hidden');
+        list.innerHTML = '';
+
+        const actionLmt = LIMITS[currentState.type].action;
+
+        currentState.tools.forEach((tool) => {
+            const timeInHours = (parseFloat(tool.hours) || 0) + ((parseFloat(tool.minutes) || 0) / 60);
+            let partialA8 = 0, percentOfAction = 0;
+            
+            if (tool.value > 0 && timeInHours > 0) {
+                partialA8 = tool.value * Math.sqrt(timeInHours / 8);
+                percentOfAction = (Math.pow(partialA8, 2) / Math.pow(actionLmt, 2)) * 100; 
+            }
+            
+            let barColor = percentOfAction > 100 ? 'bg-brand-red' : percentOfAction > 80 ? 'bg-brand-gold' : 'bg-brand-dark';
+            
+            const card = document.createElement('div');
+            card.className = "tool-card bg-gray-50/50 rounded-2xl p-5 border border-gray-200 relative group transition-all";
+            
+            card.innerHTML = `
+                <div class="flex flex-col gap-5">
+                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                        <div class="flex-1 w-full relative">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Verktøy / Utstyr</label>
+                            <input type="text" value="${tool.name}" onchange="updateToolData('${tool.id}', 'name', this.value)" class="w-full bg-white border border-gray-200 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark outline-none transition-all shadow-sm">
+                        </div>
+                        <div class="w-full sm:w-36 relative">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1 block">Vibrasjon</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" value="${tool.value || ''}" oninput="updateToolData('${tool.id}', 'value', this.value)" class="w-full bg-white border border-gray-200 focus:border-brand-dark focus:ring-1 focus:ring-brand-dark rounded-xl pl-4 pr-12 py-2.5 text-sm font-bold text-brand-dark outline-none transition-all shadow-sm text-center">
+                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400 border-l border-gray-100 my-2 pl-3">
+                                    <span class="text-[10px] font-bold">m/s²</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col xl:flex-row gap-6 items-center justify-between border-t border-gray-200 pt-4">
+                        <div class="flex items-center gap-3 w-full xl:w-auto">
+                            <div class="flex flex-col items-center">
+                                <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Timer (Daglig)</label>
+                                <div class="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm h-10">
+                                    <button onclick="stepTime('${tool.id}', 'hours', -1)" class="w-9 h-full text-brand-dark/60 hover:bg-gray-100 border-r border-gray-100"><i class="fas fa-minus text-xs"></i></button>
+                                    <div class="w-10 text-center font-bold text-brand-dark text-sm">${tool.hours || '0'}</div>
+                                    <button onclick="stepTime('${tool.id}', 'hours', 1)" class="w-9 h-full text-brand-dark/60 hover:bg-gray-100 border-l border-gray-100"><i class="fas fa-plus text-xs"></i></button>
+                                </div>
+                            </div>
+                            <div class="text-gray-300 font-bold text-xl mt-5">:</div>
+                            <div class="flex flex-col items-center">
+                                <label class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Min (Utløsertid)</label>
+                                <div class="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm h-10">
+                                    <button onclick="stepTime('${tool.id}', 'minutes', -5)" class="w-9 h-full text-brand-dark/60 hover:bg-gray-100 border-r border-gray-100"><i class="fas fa-minus text-xs"></i></button>
+                                    <div class="w-10 text-center font-bold text-brand-dark text-sm">${tool.minutes || '0'}</div>
+                                    <button onclick="stepTime('${tool.id}', 'minutes', 5)" class="w-9 h-full text-brand-dark/60 hover:bg-gray-100 border-l border-gray-100"><i class="fas fa-plus text-xs"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full xl:flex-1 flex flex-col gap-1.5">
+                            <div class="flex justify-between items-end px-1">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Forbruk av tiltakskvote</span>
+                                <span class="text-[12px] font-bold ${percentOfAction > 100 ? 'text-brand-red' : percentOfAction > 80 ? 'text-brand-gold' : 'text-brand-dark'}">${percentOfAction.toFixed(0)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200/80 h-2.5 rounded-full overflow-hidden shadow-inner-soft">
+                                <div class="h-full ${barColor} transition-all duration-700 ease-out rounded-full" style="width: ${Math.min(percentOfAction, 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="removeTool('${tool.id}')" class="absolute -top-3 -right-3 bg-white border border-gray-200 shadow-md text-gray-400 hover:text-brand-red hover:border-brand-red w-7 h-7 rounded-full flex items-center justify-center transition-all z-10"><i class="fas fa-times text-xs"></i></button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function calculateTotal() {
+        let sumA8Squared = 0;
+        currentState.tools.forEach(tool => {
+            if (tool.value > 0) {
+                const timeInHours = (tool.hours || 0) + ((tool.minutes || 0) / 60);
+                if (timeInHours > 0) {
+                    const a8 = tool.value * Math.sqrt(timeInHours / 8);
+                    sumA8Squared += Math.pow(a8, 2);
+                }
+            }
+        });
+
+        const totalA8 = Math.sqrt(sumA8Squared);
+        updateResultUI(totalA8);
+    }
+
+    function updateResultUI(totalA8) {
+        document.getElementById('totalA8Value').innerText = totalA8.toFixed(1);
+
+        const type = currentState.type;
+        const actionLmt = LIMITS[type].action;
+        const maxLmt = LIMITS[type].max;
+        const scaleMax = LIMITS[type].scaleMax;
+
+        const container = document.getElementById('resultContainer');
+        const statusTitle = document.getElementById('statusTitle');
+        const adviceHeading = document.getElementById('adviceHeading');
+        const resultBar = document.getElementById('resultBar');
+
+        let percent = Math.min((totalA8 / scaleMax) * 100, 100);
+        setTimeout(() => { resultBar.style.width = `${percent}%`; }, 50);
+
+        container.classList.remove('bg-brand-mint', 'bg-brand-peach', 'bg-brand-pink', 'border-brand-mint/20', 'border-brand-gold/20', 'border-brand-red/20');
+
+        if (totalA8 < actionLmt) {
+            container.classList.add('bg-brand-mint', 'border-brand-mint/20');
+            resultBar.style.backgroundColor = '#013026';
+            statusTitle.innerText = "Trygt nivå";
+            statusTitle.className = "text-sm font-bold mt-3 uppercase tracking-wide text-brand-dark bg-white/40 px-4 py-1.5 rounded-full inline-block shadow-sm";
+            adviceHeading.innerText = "Samlet bruk er under tiltaksverdi. Dette er et akseptabelt scenario for en arbeidsdag.";
+        } else if (totalA8 >= actionLmt && totalA8 <= maxLmt) {
+            container.classList.add('bg-brand-peach', 'border-brand-gold/20');
+            resultBar.style.backgroundColor = '#d97706';
+            statusTitle.innerText = "Tiltaksverdi brutt";
+            statusTitle.className = "text-sm font-bold mt-3 uppercase tracking-wide text-brand-gold bg-white/60 px-4 py-1.5 rounded-full inline-block shadow-sm";
+            adviceHeading.innerText = "Tiltaksverdi overskredet. Arbeidsgiver plikter å vurdere tiltak (f.eks. rullering) og tilby helseundersøkelse.";
+        } else {
+            container.classList.add('bg-brand-pink', 'border-brand-red/20');
+            resultBar.style.backgroundColor = '#dc2626';
+            statusTitle.innerText = "Grense overskredet";
+            statusTitle.className = "text-sm font-bold mt-3 uppercase tracking-wide text-brand-red bg-white/80 px-4 py-1.5 rounded-full inline-block shadow-sm";
+            adviceHeading.innerText = "ADVARSEL: Den ansatte eksponeres over absolutt lovlig grense. Arbeidet må stoppes umiddelbart.";
+        }
+    }
+
+    function preparePrintTemplate() {
+        document.getElementById('printName').innerText = document.getElementById('empName').value || 'Ikke oppgitt';
+        document.getElementById('printRole').innerText = document.getElementById('empRole').value || 'Ikke oppgitt';
+        document.getElementById('printDept').innerText = document.getElementById('empDept').value || 'Ikke oppgitt';
+        
+        const dateInput = document.getElementById('assessmentDate').value;
+        const dateStr = dateInput ? new Date(dateInput).toLocaleDateString('no-NO') : '-';
+        document.getElementById('printDateTop').innerText = dateStr;
+
+        const isHandArm = currentState.type === 'hand-arm';
+        document.getElementById('printTypeTitle').innerText = isHandArm ? "Hånd- og armvibrasjoner" : "Helkroppsvibrasjoner";
+        document.getElementById('printTypeLabelSmall').innerText = isHandArm ? "Hånd/Arm" : "Helkropp";
+        document.getElementById('printLimitAction').innerText = LIMITS[currentState.type].action.toFixed(1);
+        document.getElementById('printLimitMax').innerText = LIMITS[currentState.type].max.toFixed(1);
+
+        document.getElementById('printTotal').innerText = document.getElementById('totalA8Value').innerText;
+        document.getElementById('printStatusTitle').innerText = document.getElementById('statusTitle').innerText;
+        document.getElementById('printStatusText').innerText = document.getElementById('adviceHeading').innerText;
+        
+        // Fargesetting i utskrift basert på status
+        const total = parseFloat(document.getElementById('totalA8Value').innerText);
+        const printStatusTitle = document.getElementById('printStatusTitle');
+        const printResultBox = document.getElementById('printResultBox');
+        const printTotalBox = document.getElementById('printTotalBox');
+
+        if(total > LIMITS[currentState.type].max) { 
+            printStatusTitle.style.color = '#dc2626'; 
+            printResultBox.style.backgroundColor = '#fef2f2'; 
+            printResultBox.style.borderColor = '#fecaca'; 
+            printTotalBox.style.borderColor = '#fecaca';
+        }
+        else if (total >= LIMITS[currentState.type].action) { 
+            printStatusTitle.style.color = '#d97706'; 
+            printResultBox.style.backgroundColor = '#fffbeb'; 
+            printResultBox.style.borderColor = '#fde68a'; 
+            printTotalBox.style.borderColor = '#fde68a';
+        }
+        else { 
+            printStatusTitle.style.color = '#013026'; 
+            printResultBox.style.backgroundColor = '#f0fdf4'; 
+            printResultBox.style.borderColor = '#bbf7d0'; 
+            printTotalBox.style.borderColor = '#bbf7d0';
+        }
+
+        // --- TILTAKSPLAN KOMBINASJON ---
+        const customText = document.getElementById('actionPlanInput').value.trim();
+        let finalActionText = "";
+
+        // Hvis brukeren har valgt knapper (Chips)
+        if (currentState.selectedMeasures.length > 0) {
+            finalActionText += "Valgte standardtiltak:\n• " + currentState.selectedMeasures.join("\n• ");
+        }
+
+        // Hvis brukeren i tillegg har skrevet egen tekst
+        if (customText !== "") {
+            if (finalActionText !== "") finalActionText += "\n\nYtterligere kommentarer:\n";
+            finalActionText += customText;
+        }
+
+        if (finalActionText === "") {
+            finalActionText = "Ingen tiltaksplan oppgitt.";
+        }
+
+        document.getElementById('printActionText').innerText = finalActionText;
+        // ---------------------------------
+
+        const tbody = document.getElementById('printToolsTableBody');
+        tbody.innerHTML = '';
+        currentState.tools.forEach(tool => {
+            const timeInHours = (parseFloat(tool.hours) || 0) + ((parseFloat(tool.minutes) || 0) / 60);
+            let partialA8 = 0;
+            if (tool.value > 0 && timeInHours > 0) { partialA8 = tool.value * Math.sqrt(timeInHours / 8); }
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="py-3 px-3 border border-gray-200">${tool.name || 'Uten navn'}</td>
+                <td class="py-3 px-3 border border-gray-200 text-center font-bold">${tool.value || '0.0'}</td>
+                <td class="py-3 px-3 border border-gray-200 text-center">${tool.hours || '0'}:${(tool.minutes||0).toString().padStart(2, '0')}</td>
+                <td class="py-3 px-3 border border-gray-200 text-center font-bold">${partialA8.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // DEN FUNGERENDE PDF-MOTOREN (Direkte DOM-metode med tvinget synlighet)
+    function startPDFGeneration() {
+        document.body.style.cursor = 'wait';
+        
+        // 1. Fyll inn all data
+        preparePrintTemplate();
+
+        // 2. Vi bruker JAVASCRIPT til å bytte synlighet istedenfor klasser, det fjerner enhver tvil.
+        const ui = document.getElementById('interactive-ui');
+        const printTpl = document.getElementById('print-template');
+        
+        ui.style.display = 'none';
+        printTpl.style.display = 'block'; // Tvinger den synlig for motoren
+        
+        window.scrollTo(0, 0); // Unngå hvit boks i toppen
+
+        // 3. Vent litt, så ta bildet
+        setTimeout(() => {
+            const ansatt = document.getElementById('empName').value || 'Ansatt';
+            const dateStr = new Date().toISOString().split('T')[0];
+
+            const opt = {
+                margin:       [15, 15, 15, 15], 
+                filename:     `Vibrasjonskartlegging_${ansatt}_${dateStr}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { avoid: '.page-break-avoid' }
+            };
+
+            html2pdf().set(opt).from(printTpl).save().then(() => {
+                // 4. Bytt tilbake når alt er ferdig
+                ui.style.display = '';
+                printTpl.style.display = 'none';
+                document.body.style.cursor = 'default';
+            }).catch(err => {
+                console.error("Feil ved PDF:", err);
+                ui.style.display = '';
+                printTpl.style.display = 'none';
+                document.body.style.cursor = 'default';
+                console.log("Feil under generering av PDF.");
+            });
+            
+        }, 500); 
+    }
+</script>
